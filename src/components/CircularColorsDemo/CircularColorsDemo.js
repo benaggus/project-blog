@@ -1,15 +1,14 @@
+'use client';
 import React from 'react';
 import clsx from 'clsx';
-import {
-  Play,
-  Pause,
-  RotateCcw,
-} from 'react-feather';
+import { Play, Pause, RotateCcw } from 'react-feather';
 
 import Card from '@/components/Card';
 import VisuallyHidden from '@/components/VisuallyHidden';
 
 import styles from './CircularColorsDemo.module.css';
+import { color, motion, MotionConfig } from 'framer-motion';
+import { is } from 'date-fns/locale';
 
 const COLORS = [
   { label: 'red', value: 'hsl(348deg 100% 60%)' },
@@ -18,68 +17,78 @@ const COLORS = [
 ];
 
 function CircularColorsDemo() {
-  // TODO: This value should increase by 1 every second:
-  const timeElapsed = 0;
+  const [timeElapsed, setTimeElapsed] = React.useState(0);
+  const [colorIndex, setColorIndex] = React.useState(0);
+  const [isEnabled, setIsEnabled] = React.useState(true);
 
-  // TODO: This value should cycle through the colors in the
-  // COLORS array:
-  const selectedColor = COLORS[0];
+  React.useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (isEnabled) {
+        setTimeElapsed((currentCount) => currentCount + 1);
+        setColorIndex((currentIndex) => (currentIndex + 1) % COLORS.length);
+      }
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isEnabled]);
+
+  const selectedColor = COLORS[colorIndex];
+
+  function toggleTimer() {
+    setIsEnabled(!isEnabled);
+  }
+
+  function resetTimer() {
+    setTimeElapsed(0);
+    setColorIndex(0);
+  }
 
   return (
-    <Card as="section" className={styles.wrapper}>
-      <ul className={styles.colorsWrapper}>
-        {COLORS.map((color, index) => {
-          const isSelected =
-            color.value === selectedColor.value;
+    <MotionConfig reducedMotion="user">
+      <Card as="section" className={styles.wrapper}>
+        <motion.ul position={true} className={styles.colorsWrapper}>
+          {COLORS.map((color, index) => {
+            const isSelected = color.value === selectedColor.value;
 
-          return (
-            <li
-              className={styles.color}
-              key={index}
-            >
-              {isSelected && (
+            return (
+              <li className={styles.color} key={index}>
+                {isSelected && <div className={styles.selectedColorOutline} />}
                 <div
-                  className={
-                    styles.selectedColorOutline
-                  }
-                />
-              )}
-              <div
-                className={clsx(
-                  styles.colorBox,
-                  isSelected &&
-                    styles.selectedColorBox
-                )}
-                style={{
-                  backgroundColor: color.value,
-                }}
-              >
-                <VisuallyHidden>
-                  {color.label}
-                </VisuallyHidden>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                  className={clsx(
+                    styles.colorBox,
+                    isSelected && styles.selectedColorBox
+                  )}
+                  style={{
+                    backgroundColor: color.value,
+                  }}
+                >
+                  <VisuallyHidden>{color.label}</VisuallyHidden>
+                </div>
+              </li>
+            );
+          })}
+        </motion.ul>
 
-      <div className={styles.timeWrapper}>
-        <dl className={styles.timeDisplay}>
-          <dt>Time Elapsed</dt>
-          <dd>{timeElapsed}</dd>
-        </dl>
-        <div className={styles.actions}>
-          <button>
-            <Play />
-            <VisuallyHidden>Play</VisuallyHidden>
-          </button>
-          <button>
-            <RotateCcw />
-            <VisuallyHidden>Reset</VisuallyHidden>
-          </button>
+        <div className={styles.timeWrapper}>
+          <dl className={styles.timeDisplay}>
+            <dt>Time Elapsed</dt>
+            <dd>{timeElapsed}</dd>
+          </dl>
+          <div className={styles.actions}>
+            <button onClick={toggleTimer}>
+              {!isEnabled ? <Play /> : <Pause />}
+              <VisuallyHidden>Play</VisuallyHidden>
+            </button>
+            <button onClick={resetTimer}>
+              <RotateCcw />
+              <VisuallyHidden>Reset</VisuallyHidden>
+            </button>
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </MotionConfig>
   );
 }
 
